@@ -13,6 +13,9 @@ class ChatVertexAI:
 _stub_vertexai.ChatVertexAI = ChatVertexAI
 sys.modules["langchain_community.chat_models.vertexai"] = _stub_vertexai
 
+from ragas import evaluate
+from ragas.run_config import RunConfig
+
 from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.dataset_schema import SingleTurnSample, EvaluationDataset
@@ -75,14 +78,63 @@ metrics = [
     ContextRecall(llm=llm),
 ]
 
-# CHANGED: evaluate() legacy cukup dikasih embeddings, nggak perlu llm= lagi di sini
-# (llm udah nempel di tiap metric masing-masing)
-results = evaluate(dataset=dataset, metrics=metrics, embeddings=embeddings)
+results = evaluate(
+    dataset=dataset,
+    metrics=metrics,
+    embeddings=embeddings,
+    run_config=RunConfig(
+        max_workers=2,      # batasi concurrent request ke Gemini, default-nya 16
+        timeout=120,        # timeout per job dinaikin jadi 2 menit, default-nya 60s
+        max_retries=5,      # retry lebih banyak kalau timeout, default-nya 3
+    ),
+    raise_exceptions=False, # jangan stop kalau ada 1 job yang gagal
+)
 
 print("\n=== RAGAS Results ===")
 print(results)
 
 df = results.to_pandas()
+
+# retry baris yang masih NaN — satu-satu biar nggak timeout lagi
+import asyncio
+import math
+
+null_cols = {
+    'faithfulness':      metrics[0],
+    'answer_relevancy':  metrics[1],
+    'context_precision': metrics[2],
+    'context_recall':    metrics[3],
+}
+
+for col, metric in null_cols.items():
+    null_idx = df.index[df[col].isna()].tolist()
+    if not null_idx:
+        continue
+    print(f"\nRetrying {len(null_idx)} null rows for {col}...")
+    for idx in null_idx:
+        sample = samples[idx]
+        retry_dataset = EvaluationDataset(samples=[sample])
+        try:
+            retry_result = evaluate(
+                dataset=retry_dataset,
+                metrics=[metric],
+                embeddings=embeddings,
+                run_config=RunConfig(
+                    max_workers=1,   # satu-satu
+                    timeout=180,     # lebih longgar
+                    max_retries=8,
+                ),
+                raise_exceptions=False,
+            )
+            retry_df = retry_result.to_pandas()
+            new_val = retry_df[col].iloc[0]
+            if not math.isnan(new_val):
+                df.at[idx, col] = new_val
+                print(f"  #{idx+1} {col}: retried → {new_val:.3f}")
+            else:
+                print(f"  #{idx+1} {col}: still null after retry")
+        except Exception as e:
+            print(f"  #{idx+1} {col}: retry failed — {e}")
 
 # UNCHANGED dari fix sebelumnya: nempelin balik difficulty & source yang ilang pas lewat SingleTurnSample
 df["difficulty"] = [r["difficulty"] for r in clean]

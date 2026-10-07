@@ -12,143 +12,139 @@ from eval_qa import answer_question
 #   [WHO]   = dirangkum dari WHO_Guideline.md
 #   [Resep] = dirangkum dari Buku_Resep_MPASI.md
 
-# CHANGED: rebuilt 20 questions with difficulty tiers (10 easy / 7 medium / 3 hard)
-# and a "difficulty" field added for later per-tier RAGAS analysis
+# REBUILT: 20 pertanyaan baru — dirancang sesuai fungsi nyata sistem
+# (generate meal plan berdasarkan data bayi + KB chunks)
+# Ground truth 100% dijangkar ke konten KB aktual
+# Distribusi: 10 easy / 7 medium / 3 hard
 RAW_QUESTIONS = [
 
-    # ── WHO GUIDELINE (6: 3 easy, 3 medium) ─────────────────────────
+    # ── EASY (10) ────────────────────────────────────────────────────
 
     {
-        "question": "Pada usia berapa MPASI mulai diperkenalkan menurut WHO, dan apakah ASI tetap dilanjutkan?",
-        "ground_truth": "WHO merekomendasikan MPASI diperkenalkan pada usia 6 bulan (180 hari) sambil tetap melanjutkan pemberian ASI. Ini adalah rekomendasi kuat meskipun didukung bukti dengan tingkat kepastian rendah.",
+        "question": "Pada usia berapa bayi sebaiknya mulai diberikan MPASI menurut WHO?",
+        "ground_truth": "Menurut WHO, bayi sebaiknya mulai diperkenalkan dengan makanan pendamping ASI (MPASI) pada usia 6 bulan sambil tetap melanjutkan pemberian ASI.",
         "source": "[WHO-Rec3]",
-        "difficulty": "easy"
+        "difficulty": "easy",
     },
     {
-        "question": "Apa saja 8 kelompok makanan kunci yang digunakan WHO dalam pemodelan pola makan bayi 6-23 bulan?",
-        "ground_truth": "Kedelapan kelompok makanan kunci WHO/UNICEF adalah: ASI, makanan hewani (daging, ikan, unggas, jeroan), produk susu, telur, kacang-kacangan dan legum, buah/sayur kaya vitamin A, buah/sayur lainnya, serta biji-bijian/umbi-umbian/kentang.",
-        "source": "[WHO-Rec4-Background]",
-        "difficulty": "easy"
+        "question": "Apa tekstur MPASI yang tepat untuk bayi usia 9-11 bulan menurut Buku KIA 2024?",
+        "ground_truth": "Untuk bayi usia 9-11 bulan, tekstur MPASI yang dianjurkan adalah dicincang — bahan makanannya sama dengan makanan orang dewasa, namun dicincang terlebih dahulu sebelum disajikan kepada bayi.",
+        "source": "[KIA-Tabel]",
+        "difficulty": "easy",
     },
-    {
-        "question": "Apakah bayi usia 6-23 bulan boleh mengonsumsi minuman manis (sugar-sweetened beverages) menurut WHO?",
-        "ground_truth": "Tidak. WHO merekomendasikan secara kuat bahwa minuman manis tidak boleh dikonsumsi oleh bayi dan anak usia 6-23 bulan, meskipun tingkat kepastian buktinya rendah.",
-        "source": "[WHO-Rec5b]",
-        "difficulty": "easy"
-    },
-    {
-        "question": "Apa perbedaan rekomendasi WHO mengenai jenis susu untuk bayi 6-11 bulan dibandingkan anak 12-23 bulan yang tidak mendapat ASI?",
-        "ground_truth": "Untuk bayi 6-11 bulan, WHO menyatakan susu formula maupun susu hewani sama-sama boleh diberikan (rekomendasi kondisional). Untuk anak 12-23 bulan, susu hewani lebih dianjurkan dan susu formula lanjutan (follow-up formula) tidak direkomendasikan, karena di usia ini anak sudah bisa memenuhi kebutuhan gizi dari makanan padat yang lebih beragam.",
-        "source": "[WHO-Rec2a] + [WHO-Rec2b]",
-        "difficulty": "medium"
-    },
-    {
-        "question": "Mengapa rekomendasi WHO untuk kacang-kacangan/biji-bijian bersifat kondisional, berbeda dengan rekomendasi protein hewani yang bersifat kuat?",
-        "ground_truth": "Rekomendasi protein hewani bersifat kuat karena pemodelan diet menunjukkan sumber ini penting untuk menutup kesenjangan zat besi, zinc, dan B12. Sementara rekomendasi kacang-kacangan/biji-bijian hanya kondisional karena buktinya sangat terbatas (very low certainty) dan pemodelan diet menunjukkan mengecualikan kelompok ini hanya berdampak kecil karena bisa dikompensasi kelompok makanan lain — namun tetap penting terutama saat protein hewani sulit didapat.",
-        "source": "[WHO-Rec4c]",
-        "difficulty": "medium"
-    },
-    {
-        "question": "Apa itu responsive feeding menurut WHO, dan mengapa tetap direkomendasikan secara kuat meskipun bukti pendukungnya bercampur?",
-        "ground_truth": "Responsive feeding adalah praktik memberi makan yang mendorong anak makan secara mandiri dan merespons sinyal fisiologis serta perkembangannya, membantu regulasi diri dalam makan. Meskipun hasil studi bervariasi karena perbedaan jenis intervensi yang diteliti, WHO tetap merekomendasikannya secara kuat karena dianggap komponen penting nurturing care yang membantu mencegah kekurangan maupun kelebihan gizi sekaligus mendukung perkembangan anak.",
-        "source": "[WHO-Rec7]",
-        "difficulty": "medium"
-    },
-
-    # ── BUKU KIA 2024 (5: 3 easy, 2 medium) ─────────────────────────
-
     {
         "question": "Berapa porsi dan frekuensi makan MPASI untuk bayi usia 6-8 bulan menurut Buku KIA 2024?",
-        "ground_truth": "Untuk bayi usia 6-8 bulan, porsi dimulai 2-3 sdm bertahap hingga setengah mangkok ukuran 250 ml (125 ml), dengan frekuensi 2-3 kali makanan utama ditambah 1-2 kali makanan selingan per hari.",
+        "ground_truth": "Untuk bayi usia 6-8 bulan, porsi dimulai dari 2-3 sendok makan dan ditingkatkan bertahap hingga setengah mangkok ukuran 250 ml (sekitar 125 ml). Frekuensinya adalah 2-3 kali makanan utama ditambah 1-2 kali makanan selingan per hari.",
         "source": "[KIA-Tabel]",
-        "difficulty": "easy"
+        "difficulty": "easy",
     },
     {
-        "question": "Berapa persen kontribusi ASI dan MPASI terhadap kebutuhan gizi anak usia 12-24 bulan menurut Buku KIA 2024?",
-        "ground_truth": "Pada usia 12-24 bulan, sekitar 70% kebutuhan gizi anak dipenuhi dari MPASI, sementara ASI masih menyumbang 30% kebutuhan gizi anak.",
-        "source": "[KIA-12-24bln]",
-        "difficulty": "easy"
+        "question": "Apakah bayi usia 6-23 bulan boleh diberikan minuman manis atau sugar-sweetened beverages menurut WHO?",
+        "ground_truth": "Tidak. WHO merekomendasikan secara kuat bahwa minuman manis (sugar-sweetened beverages) tidak boleh dikonsumsi oleh bayi dan anak usia 6-23 bulan, meskipun tingkat kepastian buktinya rendah.",
+        "source": "[WHO-Rec5b]",
+        "difficulty": "easy",
     },
     {
-        "question": "Apa saja 4 prinsip utama pemberian MPASI menurut Buku KIA 2024?",
-        "ground_truth": "Empat prinsip utama pemberian MPASI adalah: tepat waktu (diberikan mulai usia 6 bulan), cukup sesuai kebutuhan/adekuat (mempertimbangkan jumlah, frekuensi, tekstur, dan variasi), aman (memperhatikan kebersihan makanan dan peralatan), serta diberikan dengan cara yang benar (teratur, lingkungan netral, maksimal 30 menit per sesi makan).",
-        "source": "[KIA-Prinsip]",
-        "difficulty": "easy"
+        "question": "Apa saja sumber protein hewani yang bisa digunakan dalam MPASI bayi menurut Buku KIA 2024?",
+        "ground_truth": "Menurut Buku KIA 2024, sumber protein hewani yang bisa digunakan dalam MPASI antara lain ikan, ayam, daging, hati, udang, telur, susu dan hasil olahannya. Pemberian protein hewani dalam MPASI diprioritaskan.",
+        "source": "[KIA-Variasi]",
+        "difficulty": "easy",
     },
     {
-        "question": "Bagaimana perubahan tekstur dan kebutuhan cairan MPASI dari fase 6-8 bulan hingga 12-23 bulan menurut Buku KIA 2024?",
-        "ground_truth": "Tekstur berkembang dari disaring/lumat kental (6-8 bulan), menjadi dicincang (9-11 bulan), hingga masak biasa/diiris seperti makanan keluarga (12-23 bulan). Kebutuhan cairan juga meningkat dari sekitar 800 ml/hari (±3 gelas belimbing) pada usia 6-8 bulan menjadi 1.300 ml/hari (±5 gelas belimbing) pada usia 12-23 bulan.",
-        "source": "[KIA-Tabel]",
-        "difficulty": "medium"
+        "question": "Bahan makanan apa saja yang termasuk sumber karbohidrat untuk MPASI bayi menurut Buku KIA 2024?",
+        "ground_truth": "Menurut Buku KIA 2024, sumber karbohidrat (makanan pokok) untuk MPASI meliputi beras, biji-bijian, jagung, gandum, sagu, umbi, kentang, singkong, dan lain-lain.",
+        "source": "[KIA-Variasi]",
+        "difficulty": "easy",
     },
     {
-        "question": "Apa perbedaan cara membuat MPASI dari makanan keluarga matang dibandingkan dari bahan mentah untuk bayi 9-11 bulan?",
-        "ground_truth": "Dari makanan keluarga matang: bahan seperti nasi, ikan kembung bumbu kuning, dan tumis buncis langsung dicincang lalu disajikan dengan kuah sayur — lebih praktis. Dari bahan mentah: beras dimasak dulu dengan bumbu tumis (bawang merah, daun salam, kunyit) dan minyak kelapa, baru ikan kembung dan buncis cincang dimasukkan hingga tekstur bubur kasar/cincang tercapai — prosesnya lebih panjang tapi bisa dikontrol penuh dari awal.",
-        "source": "[KIA-Cara Buat]",
-        "difficulty": "medium"
-    },
-
-    # ── INTERVIEW (3: 2 easy, 1 medium) ──────────────────────────────
-
-    {
-        "question": "Selain usia dan berat badan, data klinis apa lagi yang perlu diketahui sebelum memberikan rekomendasi MPASI menurut narasumber?",
-        "ground_truth": "Data klinis tambahan yang penting meliputi riwayat alergi, riwayat penyakit, jumlah gigi, dan apakah bayi lahir cukup bulan atau tidak. Pada kasus tertentu, bayi yang lahir prematur atau berat badannya tidak bertambah dengan ASI saja mungkin memerlukan MPASI lebih awal dari 6 bulan, dengan syarat kepala sudah bisa tegak.",
+        "question": "Selain usia dan berat badan, data klinis apa lagi yang penting diketahui sebelum memberikan rekomendasi MPASI menurut narasumber?",
+        "ground_truth": "Menurut narasumber, data klinis tambahan yang penting meliputi riwayat alergi, riwayat penyakit, jumlah gigi, dan apakah bayi lahir cukup bulan atau tidak. Pada kasus tertentu, bayi yang lahir prematur atau berat badannya tidak bertambah optimal dengan ASI saja mungkin memerlukan MPASI lebih awal dari 6 bulan, dengan syarat kepala sudah bisa tegak.",
         "source": "[I-A1]",
-        "difficulty": "easy"
+        "difficulty": "easy",
     },
-    {
-        "question": "Nutrisi apa yang paling sering kurang terpenuhi pada bayi usia 6-24 bulan menurut narasumber, dan apa penyebabnya?",
-        "ground_truth": "Nutrisi yang paling sering kurang terpenuhi adalah sayuran dan protein seperti seafood atau telur, yang sulit diberikan karena kekhawatiran orang tua terhadap reaksi alergi. Narasumber menekankan bahwa reaksi alergi yang muncul belum tentu permanen dan bisa dicoba kembali beberapa bulan ke depan.",
-        "source": "[I-B2]",
-        "difficulty": "easy"
-    },
-    {
-        "question": "Apa dua pola kesalahan paling umum orang tua dalam pemberian tekstur MPASI menurut pengamatan narasumber di lapangan?",
-        "ground_truth": "Dua pola kesalahan yang sering ditemui adalah: tekstur dinaikkan terlalu cepat, di mana anak yang seharusnya masih di tekstur lembut/lumat sudah diberi tekstur lebih kasar padahal belum siap; dan sebaliknya, tekstur terlalu lama tidak dinaikkan padahal anak sudah waktunya naik level. Narasumber menilai banyak orang tua kurang peka terhadap kesiapan anaknya.",
-        "source": "[I-D1]",
-        "difficulty": "medium"
-    },
-
-    # ── BUKU RESEP MPASI (3: 2 easy, 1 medium) ───────────────────────
-
     {
         "question": "Apa saja langkah persiapan yang harus dilakukan sebelum menyiapkan MPASI menurut Buku Resep MPASI Kemenkes?",
         "ground_truth": "Empat langkah persiapan sebelum menyiapkan MPASI adalah: mencuci tangan dengan sabun dan air mengalir, memisahkan makanan mentah dan matang, mencuci serta menyimpan buah dan sayuran mentah di tempat sejuk, dan menyimpan makanan matang dalam wadah tertutup.",
         "source": "[Resep-Persiapan]",
-        "difficulty": "easy"
+        "difficulty": "easy",
     },
     {
-        "question": "Bagaimana komposisi piring MPASI yang dianjurkan untuk bayi usia 6-8 bulan menurut Buku Resep?",
-        "ground_truth": "Komposisi piring MPASI usia 6-8 bulan terdiri dari makanan pokok, lauk hewani (diutamakan), lemak dari minyak atau santan, serta sayur dan buah yang ditambahkan.",
-        "source": "[Resep-Infografis 6-8bln]",
-        "difficulty": "easy"
+        "question": "Apa contoh resep MPASI untuk bayi 9-12 bulan dari Buku KIA 2024 beserta bahan utamanya?",
+        "ground_truth": "Buku KIA 2024 menyediakan resep Nasi Tim Ikan Kembung Telur Puyuh untuk bayi usia 9-12 bulan. Bahan utamanya meliputi nasi putih, ikan kembung segar yang dihaluskan, telur puyuh, wortel, tomat, minyak kelapa, dan kaldu ayam. Cara membuatnya: semua bahan dimasukkan ke mangkok tim, ditambahkan kaldu, lalu ditim hingga matang dan disajikan dengan saus pepaya yang dihaluskan.",
+        "source": "[KIA-Resep9-12bln]",
+        "difficulty": "easy",
     },
     {
-        "question": "Berikan contoh resep MPASI untuk bayi 9-11 bulan dari Buku Resep beserta bahan utamanya.",
-        "ground_truth": "Salah satu contohnya adalah Nasi Tim Ikan Tuna Telur Puyuh, dengan bahan utama nasi putih, ikan tuna segar yang dihaluskan, telur puyuh, wortel, tomat, minyak kelapa, dan kaldu ayam, dimasak dengan cara ditim hingga matang lalu disajikan dengan saus pepaya.",
-        "source": "[Resep-9-11bln]",
-        "difficulty": "medium"
+        "question": "Nutrisi apa yang paling sering kurang terpenuhi pada bayi usia 6-24 bulan menurut narasumber, dan apa penyebabnya?",
+        "ground_truth": "Menurut narasumber, nutrisi yang paling sering kurang terpenuhi adalah sayuran dan protein seperti seafood atau telur, yang sulit diberikan karena kekhawatiran orang tua terhadap reaksi alergi. Narasumber menekankan bahwa reaksi alergi yang muncul belum tentu permanen dan bisa dicoba kembali beberapa bulan ke depan.",
+        "source": "[I-B2]",
+        "difficulty": "easy",
     },
 
-    # ── CROSS-SOURCE SYNTHESIS (3 hard) ──────────────────────────────
+    # ── MEDIUM (7) ───────────────────────────────────────────────────
 
     {
-        "question": "Bagaimana seharusnya waktu pemberian MPASI ditentukan untuk bayi prematur, dengan mempertimbangkan panduan usia koreksi dari narasumber dan rekomendasi umum WHO usia 6 bulan?",
-        "ground_truth": "WHO merekomendasikan MPASI dimulai pada usia 6 bulan (180 hari) sebagai panduan kesehatan masyarakat umum. Namun untuk bayi prematur, narasumber menjelaskan bahwa usia harus dihitung berdasarkan usia koreksi, bukan usia kronologis — misalnya bayi lahir di usia kehamilan 32 minggu memiliki usia koreksi yang jauh lebih muda dari usia kalendernya. Bayi lahir cukup bulan namun berat rendah (kemungkinan PJT) tetap mengikuti usia kronologis. Keputusan akhir tetap harus berkolaborasi dengan Dokter Spesialis Anak (DSA) untuk kasus prematur ini.",
-        "source": "[I-A3] + [WHO-Rec3]",
-        "difficulty": "hard"
+        "question": "Bagaimana tekstur MPASI harus disesuaikan ketika bayi berusia 8 bulan dan mulai tumbuh gigi menurut narasumber?",
+        "ground_truth": "Menurut narasumber, untuk bayi usia 6-8 bulan tekstur yang diberikan adalah lumat. Namun memasuki bulan ke-8, tekstur bisa mulai dinaikkan sedikit — hal ini bisa dilihat dari tumbuh gigi sebagai sinyal kesiapan bayi untuk menerima tekstur yang lebih kasar. Orang tua perlu peka terhadap kesiapan anaknya dalam merespons perubahan tekstur ini.",
+        "source": "[I-B3]",
+        "difficulty": "medium",
     },
     {
-        "question": "Bagaimana risiko defisiensi zat besi akibat konsumsi susu hewani pada bayi 6-11 bulan (menurut WHO) dapat diimbangi dengan rekomendasi sumber protein dari narasumber dan Buku KIA?",
-        "ground_truth": "WHO menemukan bahwa susu hewani pada bayi 6-11 bulan berisiko meningkatkan anemia dan defisiensi zat besi dibandingkan susu formula, meski gap ini bisa diatasi lewat makanan lain, suplemen, atau produk fortifikasi. Sejalan dengan ini, narasumber merekomendasikan 2 butir telur rebus per hari sebagai sumber protein hewani terjangkau untuk mencegah stunting, sementara Buku KIA menekankan protein hewani (ikan, ayam, daging, hati, telur) sebagai prioritas utama dalam variasi MPASI. Kombinasi susu hewani dengan sumber protein hewani padat zat besi lainnya dapat membantu menutup kesenjangan gizi tersebut.",
-        "source": "[WHO-Rec2a] + [I-D2] + [KIA-Variasi]",
-        "difficulty": "hard"
+        "question": "Bagaimana porsi MPASI bisa ditambah dan kapan penambahan porsi itu dianjurkan menurut narasumber?",
+        "ground_truth": "Menurut narasumber, penambahan porsi bisa dilakukan jika porsi 80 ml sudah habis dalam waktu kurang dari 30 menit. Penambahan ini terutama dianjurkan di awal-awal masa MPASI, karena seiring berjalannya waktu biasanya anak justru semakin sulit makan.",
+        "source": "[I-A2]",
+        "difficulty": "medium",
     },
     {
-        "question": "Jika bayi 9-11 bulan diduga alergi telur, bagaimana seharusnya menu MPASI-nya disusun dengan mempertimbangkan rekomendasi protein hewani harian WHO, tabel porsi Buku KIA, serta catatan narasumber tentang alergi protein?",
-        "ground_truth": "WHO merekomendasikan secara kuat bahwa protein hewani (daging, ikan, atau telur) dikonsumsi setiap hari, dengan porsi bayi 9-11 bulan sekitar setengah hingga tiga perempat mangkok per kali makan menurut Buku KIA. Namun narasumber mencatat bahwa telur dan seafood adalah sumber protein yang paling sering memicu alergi pada bayi, meski reaksi tersebut belum tentu permanen dan bisa dicoba ulang beberapa bulan kemudian. Untuk bayi dengan dugaan alergi telur, menu tetap harus memenuhi kebutuhan protein hewani harian dengan mengganti sumber lain seperti ikan, ayam, atau daging cincang, sambil berkonsultasi dengan tenaga kesehatan mengenai kapan dan bagaimana telur bisa dicoba kembali secara bertahap.",
+        "question": "Makanan dan minuman apa saja yang harus dihindari untuk anak usia 12-24 bulan menurut Buku KIA 2024?",
+        "ground_truth": "Menurut Buku KIA 2024, untuk anak usia 12-24 bulan harus dihindari: susu atau yoghurt rendah lemak, minuman bersoda, makanan yang terlalu asam dan pedas, makanan dan minuman yang tinggi kandungan gula atau menggunakan pemanis buatan seperti minuman kemasan dan kalengan, serta makanan yang banyak mengandung MSG dan bahan pengawet seperti makanan instan.",
+        "source": "[KIA-12-24bln]",
+        "difficulty": "medium",
+    },
+    {
+        "question": "Apa dua pola kesalahan paling umum orang tua dalam pemberian tekstur MPASI menurut narasumber?",
+        "ground_truth": "Dua pola kesalahan yang sering ditemui narasumber di lapangan adalah: pertama, tekstur dinaikkan terlalu cepat — anak yang seharusnya masih di tekstur lembut/lumat sudah diberi tekstur lebih kasar padahal belum siap; kedua, tekstur terlalu lama tidak dinaikkan padahal anak sudah waktunya naik level. Narasumber menilai banyak orang tua kurang peka terhadap kesiapan anaknya.",
+        "source": "[I-D1]",
+        "difficulty": "medium",
+    },
+    {
+        "question": "Kondisi apa saja yang membuat sistem rekomendasi MPASI harus merujuk orang tua langsung ke tenaga kesehatan menurut narasumber?",
+        "ground_truth": "Menurut narasumber, sistem sebaiknya merujuk langsung ke tenaga kesehatan bila ditemukan: tanda bahaya seperti demam tinggi, diare atau muntah berulang, sesak napas, atau kejang; berat badan tidak naik atau gagal tumbuh; reaksi alergi berat; bayi prematur atau BBLR yang memerlukan usia koreksi; GTM berkepanjangan; serta kondisi disabilitas atau komorbid.",
+        "source": "[I-C2]",
+        "difficulty": "medium",
+    },
+    {
+        "question": "Apa saja rekomendasi pencegahan stunting yang bisa diterapkan pada kondisi sosial-ekonomi terbatas menurut narasumber?",
+        "ground_truth": "Menurut narasumber, salah satu rekomendasi praktis untuk kondisi sosial-ekonomi terbatas adalah menyelingi MPASI dengan 2 butir telur rebus per hari sebagai sumber protein hewani yang terjangkau untuk mencegah stunting.",
+        "source": "[I-D2]",
+        "difficulty": "medium",
+    },
+    {
+        "question": "Apa perbedaan cara membuat MPASI dari makanan keluarga yang sudah matang dibandingkan dari bahan mentah untuk bayi 9-11 bulan menurut Buku KIA 2024?",
+        "ground_truth": "Menurut Buku KIA 2024, untuk bayi 9-11 bulan: dari makanan keluarga matang — nasi, ikan kembung bumbu kuning, dan tumis buncis dicincang lalu disajikan dengan kuah sayur (santan kare). Dari bahan mentah — beras dimasak dengan bumbu yang telah ditumis (bawang merah, daun salam, kunyit) dan minyak kelapa, kemudian ikan kembung dan buncis yang telah dicincang dimasukkan dan diaduk hingga mendapatkan konsistensi bubur kasar/cincang.",
+        "source": "[KIA-CaraBuat]",
+        "difficulty": "medium",
+    },
+
+    # ── HARD (3) — cross-source synthesis ───────────────────────────
+
+    {
+        "question": "Bagaimana menentukan waktu mulai MPASI untuk bayi prematur, dengan mempertimbangkan rekomendasi umum usia 6 bulan dari WHO dan panduan usia koreksi dari narasumber?",
+        "ground_truth": "WHO merekomendasikan MPASI dimulai pada usia 6 bulan (180 hari) sebagai panduan umum sambil tetap melanjutkan ASI. Namun untuk bayi prematur, narasumber menjelaskan bahwa waktu MPASI harus dihitung berdasarkan usia koreksi, bukan usia kronologis — misalnya bayi lahir di usia kehamilan 32 minggu memiliki usia koreksi yang jauh lebih muda dari usia kalendernya. Pengecualian berlaku jika bayi lahir cukup bulan (37-40 minggu) namun berat badan rendah (kemungkinan PJT), maka MPASI tetap mengikuti usia kronologis. Keputusan akhir tetap harus berkolaborasi dengan Dokter Spesialis Anak (DSA).",
+        "source": "[WHO-Rec3] + [I-A3]",
+        "difficulty": "hard",
+    },
+    {
+        "question": "Jika bayi usia 9-11 bulan diduga alergi telur, bagaimana menyusun menu MPASI yang tetap memenuhi kebutuhan protein hewani harian menurut WHO dan porsi yang sesuai menurut Buku KIA 2024, dengan mempertimbangkan catatan narasumber tentang alergi?",
+        "ground_truth": "WHO merekomendasikan secara kuat bahwa protein hewani seperti daging, ikan, atau telur dikonsumsi setiap hari oleh bayi usia 6-23 bulan. Untuk bayi 9-11 bulan, Buku KIA 2024 menetapkan porsi setengah hingga tiga perempat mangkok ukuran 250 ml per kali makan. Narasumber mencatat bahwa telur dan seafood adalah protein yang paling sering memicu alergi, namun reaksi tersebut belum tentu permanen dan bisa dicoba ulang beberapa bulan kemudian. Untuk bayi dengan dugaan alergi telur, kebutuhan protein hewani harian tetap harus dipenuhi dengan mengganti sumber lain seperti ikan, ayam, atau daging cincang sesuai porsi yang dianjurkan, sambil berkonsultasi dengan tenaga kesehatan mengenai kapan telur bisa dicoba kembali.",
         "source": "[WHO-Rec4a] + [KIA-Tabel] + [I-B2]",
-        "difficulty": "hard"
+        "difficulty": "hard",
+    },
+    {
+        "question": "Bagaimana panduan Buku KIA 2024 dan rekomendasi narasumber dapat saling melengkapi dalam menyusun MPASI untuk bayi usia 6-8 bulan dari bahan lokal yang terjangkau?",
+        "ground_truth": "Buku KIA 2024 menyediakan contoh bahan lokal untuk bayi 6-8 bulan dari bahan mentah: beras putih, telur ayam, tempe kedelai, wortel, dan santan — dimasak dengan bumbu tumis (bawang merah, daun salam, kunyit) hingga konsistensi bubur kental. Tekstur pada usia ini harus disaring/lumat dan kental, dengan porsi 2-3 sdm bertahap hingga setengah mangkok, 2-3 kali makanan utama per hari. Narasumber melengkapi dengan rekomendasi bahwa untuk kondisi ekonomi terbatas, 2 butir telur rebus per hari bisa dijadikan sumber protein hewani terjangkau untuk mencegah stunting, dan mengingatkan bahwa menu sebaiknya sudah mencakup protein hewani, nabati, dan sayuran dalam satu hari (menu 4-5 bintang), bukan menu tunggal.",
+        "source": "[KIA-CaraBuat] + [KIA-Tabel] + [I-D2] + [I-B1]",
+        "difficulty": "hard",
     },
 
 ]
